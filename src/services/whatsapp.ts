@@ -570,54 +570,12 @@ private loadKaryawanData() {
     }
 
     private async generateProductMockup(
-      type: 'kaleng' | 'rokok' | 'cup' | 'case' | 'idcard' | 'topi' | 'bingkai' | 'kaos' | 'bantal',
+      type: 'rokok' | 'case' | 'idcard' | 'topi' | 'bingkai' | 'kaos' | 'bantal',
       imageBuffer: Buffer,
       customText: string = "",
       userName: string = "User"
     ): Promise<Buffer> {
       const templatesDir = path.join(process.cwd(), 'public/templates');
-
-      if (type === 'kaleng') {
-        const templatePath = path.join(templatesDir, 'template_kaleng.jpg');
-        // Exact can cylinder body: left=146, top=300, width=554, height=800
-        const canW = 554, canH = 800;
-        const canPhoto = await sharp(imageBuffer).resize(canW, canH, { fit: 'cover' }).toBuffer();
-
-        let textOverlay = '';
-        if (customText.trim()) {
-          const cleanText = customText.trim().replace(/[<>&'"]/g, '').substring(0, 24);
-          textOverlay = `
-            <rect x="35" y="${canH - 145}" width="${canW - 70}" height="76" rx="20" fill="#000000" fill-opacity="0.8" />
-            <text x="${canW / 2}" y="${canH - 96}" font-size="30" font-family="sans-serif" font-weight="900" fill="#ffffff" text-anchor="middle">${cleanText}</text>
-          `;
-        }
-
-        const canShine = Buffer.from(`
-          <svg width="${canW}" height="${canH}">
-            <defs>
-              <linearGradient id="canGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.55"/>
-                <stop offset="8%" stop-color="#000000" stop-opacity="0.14"/>
-                <stop offset="32%" stop-color="#ffffff" stop-opacity="0.35"/>
-                <stop offset="55%" stop-color="#ffffff" stop-opacity="0.06"/>
-                <stop offset="88%" stop-color="#000000" stop-opacity="0.18"/>
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.60"/>
-              </linearGradient>
-            </defs>
-            <rect width="${canW}" height="${canH}" fill="url(#canGrad)"/>
-            ${textOverlay}
-          </svg>
-        `);
-
-        const canFinalLabel = await sharp(canPhoto)
-          .composite([{ input: canShine, blend: 'over' }])
-          .toBuffer();
-
-        return await sharp(templatePath)
-          .composite([{ input: canFinalLabel, top: 300, left: 146 }])
-          .jpeg({ quality: 92 })
-          .toBuffer();
-      }
 
       if (type === 'rokok') {
         const templatePath = path.join(templatesDir, 'template_rokok.jpg');
@@ -645,55 +603,6 @@ private loadKaryawanData() {
 
         return await sharp(templatePath)
           .composite([{ input: rokokFinal, top: 552, left: 216 }])
-          .jpeg({ quality: 92 })
-          .toBuffer();
-      }
-
-      if (type === 'cup') {
-        const templatePath = path.join(templatesDir, 'template_cup.jpg');
-        // Exact printable cup body: left=224, top=370, width=410, height=610 (tapered from 410 to 314)
-        const cupW = 410, cupH = 610;
-        const cupPhoto = await sharp(imageBuffer).resize(cupW, cupH, { fit: 'cover' }).toBuffer();
-
-        const coffeeTitle = customText.trim() ? customText.trim().replace(/[<>&'"]/g, '').substring(0, 16) : "COFFEE";
-
-        const cupMaskSvg = Buffer.from(`
-          <svg width="${cupW}" height="${cupH}">
-            <defs>
-              <mask id="cupM">
-                <polygon points="0,0 ${cupW},0 ${cupW - 48},${cupH} 48,${cupH}" fill="white"/>
-              </mask>
-              <linearGradient id="cupShine" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.38"/>
-                <stop offset="25%" stop-color="#ffffff" stop-opacity="0.22"/>
-                <stop offset="50%" stop-color="#ffffff" stop-opacity="0.05"/>
-                <stop offset="75%" stop-color="#000000" stop-opacity="0.15"/>
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.48"/>
-              </linearGradient>
-            </defs>
-            <g mask="url(#cupM)">
-              <rect width="${cupW}" height="${cupH}" fill="url(#cupShine)"/>
-              <circle cx="${cupW / 2}" cy="${cupH / 2 - 20}" r="72" fill="#000000" fill-opacity="0.65" stroke="#fbbf24" stroke-width="3"/>
-              <text x="${cupW / 2}" y="${cupH / 2 - 32}" font-size="13" font-family="sans-serif" font-weight="900" fill="#fbbf24" letter-spacing="2" text-anchor="middle">★ PREMIUM ★</text>
-              <text x="${cupW / 2}" y="${cupH / 2 - 5}" font-size="16" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">${coffeeTitle}</text>
-              <text x="${cupW / 2}" y="${cupH / 2 + 18}" font-size="12" font-family="sans-serif" fill="#cbd5e1" text-anchor="middle">ARABICA BLEND</text>
-            </g>
-          </svg>
-        `);
-        const cupMaskPng = await sharp(cupMaskSvg).png().toBuffer();
-
-        const cupShapeMask = Buffer.from(`<svg width="${cupW}" height="${cupH}"><polygon points="0,0 ${cupW},0 ${cupW - 48},${cupH} 48,${cupH}" fill="white"/></svg>`);
-
-        const cupFinal = await sharp(cupPhoto)
-          .composite([
-            { input: cupShapeMask, blend: 'dest-in' },
-            { input: cupMaskPng, blend: 'over' }
-          ])
-          .png()
-          .toBuffer();
-
-        return await sharp(templatePath)
-          .composite([{ input: cupFinal, top: 370, left: 224 }])
           .jpeg({ quality: 92 })
           .toBuffer();
       }
@@ -1995,9 +1904,7 @@ private loadKaryawanData() {
     const gameCommands = ['.gamemenu', 'gamemenu', '.tebakgambar', 'tebakgambar', '.susunkata', 'susunkata', '.math', 'math', '.tebakkata', 'tebakkata', '.tebakbendera', 'tebakbendera', '.asahotak', 'asahotak', '.tebaklirik', 'tebaklirik', '.tekateki', 'tekateki', '.tebakangka', 'tebakangka', '.kuis', 'kuis', '.tebakkota', 'tebakkota', '.family100', 'family100', '.tebakusia', 'tebakusia', '.tebakkimia', 'tebakkimia', '.tebakbuah', 'tebakbuah', '.werewolf', 'werewolf', '.tebakuang', 'tebakuang', '.tebaksurah', 'tebaksurah', '.tebakhewan', 'tebakhewan', '.tebakbaju', 'tebakbaju', '.tebakcelana', 'tebakcelana', '.tebakmakanan', 'tebakmakanan', '.tebakjkt48', 'tebakjkt48', '.togel', 'togel', '.stoptogel', 'stoptogel', '.truthordare', 'truthordare', '.ulartangga', 'ulartangga'];
     const gabutCommands = [
       '.gabutmenu', 'gabutmenu',
-      '.cminkaleng', 'cminkaleng', '.minkaleng', 'minkaleng',
       '.ckotrokok', 'ckotrokok', '.kotrokok', 'kotrokok',
-      '.cpapercup', 'cpapercup', '.papercup', 'papercup',
       '.cjerigen', 'cjerigen',
       '.csoftcasehp', 'csoftcasehp', '.softcasehp', 'softcasehp',
       '.cidcard', 'cidcard', '.idcard', 'idcard',
@@ -2225,9 +2132,7 @@ Ketik menu yang kamu inginkan.`;
     } else if (body === "gabutmenu" || body === ".gabutmenu" || body === "gabut menu" || body === ".gabut menu") {
       const gabutText = `🎁 *Gabut Menu*
 
-│ .cminkaleng [teks]
 │ .ckotrokok [teks]
-│ .cpapercup [teks]
 │ .csoftcasehp [teks]
 │ .cidcard [teks]
 │ .ctopi [teks]
@@ -7799,18 +7704,10 @@ Link referensi: ${randomItem.link}` }, { quoted: msg });
      } else if (
         gabutCommands.includes(requestedCmd.toLowerCase()) ||
         gabutCommands.includes("." + requestedCmd.toLowerCase()) ||
-        body.toLowerCase().startsWith(".cminkaleng") ||
-        body.toLowerCase().startsWith("cminkaleng") ||
-        body.toLowerCase().startsWith(".minkaleng") ||
-        body.toLowerCase().startsWith("minkaleng") ||
         body.toLowerCase().startsWith(".ckotrokok") ||
         body.toLowerCase().startsWith("ckotrokok") ||
         body.toLowerCase().startsWith(".kotrokok") ||
         body.toLowerCase().startsWith("kotrokok") ||
-        body.toLowerCase().startsWith(".cpapercup") ||
-        body.toLowerCase().startsWith("cpapercup") ||
-        body.toLowerCase().startsWith(".papercup") ||
-        body.toLowerCase().startsWith("papercup") ||
         body.toLowerCase().startsWith(".csoftcasehp") ||
         body.toLowerCase().startsWith("csoftcasehp") ||
         body.toLowerCase().startsWith(".softcasehp") ||
@@ -7845,9 +7742,7 @@ Link referensi: ${randomItem.link}` }, { quoted: msg });
         if (rawCmd === "gabutmenu" || body.toLowerCase() === "gabutmenu" || body.toLowerCase() === ".gabutmenu") {
           const gabutText = `🎁 *Gabut Menu*
 
-│ .cminkaleng [teks]
 │ .ckotrokok [teks]
-│ .cpapercup [teks]
 │ .csoftcasehp [teks]
 │ .cidcard [teks]
 │ .ctopi [teks]
@@ -7861,22 +7756,14 @@ _Kirim atau balas/reply foto dengan perintah di atas. Jika tanpa foto, otomatis 
           return;
         }
 
-        let mockupType: "kaleng" | "rokok" | "cup" | "case" | "idcard" | "topi" | "bingkai" | "kaos" | "bantal" | null = null;
+        let mockupType: "rokok" | "case" | "idcard" | "topi" | "bingkai" | "kaos" | "bantal" | null = null;
         let labelName = "";
         let captionEmoji = "🎁";
 
-        if (rawCmd === "cminkaleng" || rawCmd === "minkaleng") {
-          mockupType = "kaleng";
-          labelName = "Minuman Kaleng";
-          captionEmoji = "🥫";
-        } else if (rawCmd === "ckotrokok" || rawCmd === "kotrokok") {
+        if (rawCmd === "ckotrokok" || rawCmd === "kotrokok") {
           mockupType = "rokok";
           labelName = "Kotak Rokok";
           captionEmoji = "🚬";
-        } else if (rawCmd === "cpapercup" || rawCmd === "papercup") {
-          mockupType = "cup";
-          labelName = "Paper Cup Kopi";
-          captionEmoji = "☕";
         } else if (rawCmd === "csoftcasehp" || rawCmd === "softcasehp") {
           mockupType = "case";
           labelName = "Softcase HP";
@@ -7905,12 +7792,8 @@ _Kirim atau balas/reply foto dengan perintah di atas. Jika tanpa foto, otomatis 
 
         if (!mockupType) {
           const lBody = body.toLowerCase().trim();
-          if (lBody.startsWith(".cminkaleng") || lBody.startsWith("cminkaleng") || lBody.startsWith(".minkaleng") || lBody.startsWith("minkaleng")) {
-            mockupType = "kaleng"; labelName = "Minuman Kaleng"; captionEmoji = "🥫";
-          } else if (lBody.startsWith(".ckotrokok") || lBody.startsWith("ckotrokok") || lBody.startsWith(".kotrokok") || lBody.startsWith("kotrokok")) {
+          if (lBody.startsWith(".ckotrokok") || lBody.startsWith("ckotrokok") || lBody.startsWith(".kotrokok") || lBody.startsWith("kotrokok")) {
             mockupType = "rokok"; labelName = "Kotak Rokok"; captionEmoji = "🚬";
-          } else if (lBody.startsWith(".cpapercup") || lBody.startsWith("cpapercup") || lBody.startsWith(".papercup") || lBody.startsWith("papercup")) {
-            mockupType = "cup"; labelName = "Paper Cup Kopi"; captionEmoji = "☕";
           } else if (lBody.startsWith(".csoftcasehp") || lBody.startsWith("csoftcasehp") || lBody.startsWith(".softcasehp") || lBody.startsWith("softcasehp")) {
             mockupType = "case"; labelName = "Softcase HP"; captionEmoji = "📱";
           } else if (lBody.startsWith(".cidcard") || lBody.startsWith("cidcard") || lBody.startsWith(".idcard") || lBody.startsWith("idcard")) {
